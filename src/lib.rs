@@ -1,18 +1,7 @@
-// Source: https://repl.it/@Scoder12/aoc-rust-template
+extern crate aoc_runner;
+#[macro_use]
+extern crate aoc_runner_derive;
 
-// Days
 pub mod day01;
 
-pub fn noop(_inp: String) {}
-
-pub type DayFn = fn(String);
-
-pub fn get_day(day: u32) -> (DayFn, DayFn) {
-    return match day {
-        1 => (day01::part1, day01::part2),
-        _ => {
-            println!("Unknown day: {}", day);
-            return (noop, noop);
-        }
-    };
-}
+aoc_lib!{ year = 2021 }

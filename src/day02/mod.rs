@@ -37,6 +37,36 @@ pub fn solve_part1(input: &Vec<(String, Result<usize, ParseIntError>)>) -> Resul
     Ok(depth * distance)
 }
 
+#[aoc(day2, part2)]
+pub fn solve_part2(input: &Vec<(String, Result<usize, ParseIntError>)>) -> Result<usize, ParseIntError> {
+    let mut depth = 0;
+    let mut distance = 0;
+    let mut aim = 0;
+
+    for (direction, amount) in input {
+        match direction.as_str() {
+            "forward" => {
+                // TODO: avoid unwrap?
+                // TODO: avoid as_ref?
+                distance += amount.as_ref().unwrap();
+                depth += amount.as_ref().unwrap() * aim;
+            },
+            "down" => {
+                aim += amount.as_ref().unwrap();
+            },
+            "up" => {
+                aim -= amount.as_ref().unwrap();
+            },
+            _ => {
+                panic!("Wut");
+            }
+        }
+    }
+
+    Ok(depth * distance)
+}
+
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -58,6 +88,17 @@ mod test {
         let expected_output = 150;
 
         let output = solve_part1(&input).unwrap();
+
+        assert_eq!(output, expected_output);
+    }
+
+
+    #[test]
+    pub fn test_solve_part2() {
+        let input = sample();
+        let expected_output = 900;
+
+        let output = solve_part2(&input).unwrap();
 
         assert_eq!(output, expected_output);
     }

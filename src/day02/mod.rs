@@ -1,69 +1,88 @@
 use std::num::ParseIntError;
+use std::str::FromStr;
+
+
+#[derive(Debug)]
+enum Direction {
+    UP, DOWN, FORWARD
+}
+
+#[derive(Debug)]
+pub struct Command {
+    direction: Direction,
+    amount: usize,
+}
+
+impl FromStr for Command {
+    type Err = ParseIntError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let v = s.split(" ").collect::<Vec<&str>>();
+        let direction = match v[0] {
+            "forward" => Direction::FORWARD,
+            "up" => Direction::UP,
+            "down" => Direction::DOWN,
+            _ => panic!("Cannot parse '{}' as direction", v[0])
+        };
+
+        let amount = v[1].parse::<usize>();
+
+        Ok(Command { direction: direction, amount: amount? })
+    }
+}
 
 #[aoc_generator(day2)]
-pub fn input_generator(input: &str) -> Vec<(String, Result<usize, ParseIntError>)> {
+pub fn input_generator(input: &str) -> Result<Vec<Command>, ParseIntError> {
     input
         .lines()
         .filter(|s| *s != "")
-        .map(|s| s.split(" ").map(|x| x.to_owned()).collect::<Vec<String>>())
-        .map(|v| (v[0].clone(), v[1].parse::<usize>()))
-        .collect::<Vec<(String, Result<usize, ParseIntError>)>>()
+        .map(|s| Command::from_str(s))
+        .collect::<Result<Vec<Command>, ParseIntError>>()
 }
 
 #[aoc(day2, part1)]
-pub fn solve_part1(input: &Vec<(String, Result<usize, ParseIntError>)>) -> Result<usize, ParseIntError> {
+pub fn solve_part1(input: &Vec<Command>) -> usize {
     let mut depth = 0;
     let mut distance = 0;
 
-    for (direction, amount) in input {
-        match direction.as_str() {
-            "forward" => {
-                // TODO: avoid unwrap?
-                // TODO: avoid as_ref?
-                distance += amount.as_ref().unwrap();
+    for command in input {
+        match command.direction {
+            Direction::FORWARD => {
+                distance += command.amount;
             },
-            "down" => {
-                depth += amount.as_ref().unwrap();
+            Direction::DOWN => {
+                depth += command.amount;
             },
-            "up" => {
-                depth -= amount.as_ref().unwrap();
-            },
-            _ => {
-                panic!("Wut");
+            Direction::UP => {
+                depth -= command.amount;
             }
         }
     }
 
-    Ok(depth * distance)
+    depth * distance
 }
 
 #[aoc(day2, part2)]
-pub fn solve_part2(input: &Vec<(String, Result<usize, ParseIntError>)>) -> Result<usize, ParseIntError> {
+pub fn solve_part2(input: &Vec<Command>) -> usize {
     let mut depth = 0;
     let mut distance = 0;
     let mut aim = 0;
 
-    for (direction, amount) in input {
-        match direction.as_str() {
-            "forward" => {
-                // TODO: avoid unwrap?
-                // TODO: avoid as_ref?
-                distance += amount.as_ref().unwrap();
-                depth += amount.as_ref().unwrap() * aim;
+    for command in input {
+        match command.direction {
+            Direction::FORWARD => {
+                distance += command.amount;
+                depth += command.amount * aim;
             },
-            "down" => {
-                aim += amount.as_ref().unwrap();
+            Direction::DOWN => {
+                aim += command.amount;
             },
-            "up" => {
-                aim -= amount.as_ref().unwrap();
-            },
-            _ => {
-                panic!("Wut");
+            Direction::UP => {
+                aim -= command.amount;
             }
         }
     }
 
-    Ok(depth * distance)
+    depth * distance
 }
 
 
@@ -71,23 +90,16 @@ pub fn solve_part2(input: &Vec<(String, Result<usize, ParseIntError>)>) -> Resul
 mod test {
     use super::*;
 
-    pub fn sample() -> Vec<(String, Result<usize, ParseIntError>)> {
-        vec![
-            (String::from("forward"), Ok(5)),
-            (String::from("down"), Ok(5)),
-            (String::from("forward"), Ok(8)),
-            (String::from("up"), Ok(3)),
-            (String::from("down"), Ok(8)),
-            (String::from("forward"), Ok(2)),
-        ]
+    pub fn sample_str() -> String {
+        String::from("forward 5\ndown 5\nforward 8\nup 3\ndown 8\nforward 2\n")
     }
 
     #[test]
     pub fn test_solve_part1() {
-        let input = sample();
+        let input = input_generator(sample_str().as_str()).unwrap();
         let expected_output = 150;
 
-        let output = solve_part1(&input).unwrap();
+        let output = solve_part1(&input);
 
         assert_eq!(output, expected_output);
     }
@@ -95,10 +107,10 @@ mod test {
 
     #[test]
     pub fn test_solve_part2() {
-        let input = sample();
+        let input = input_generator(sample_str().as_str()).unwrap();
         let expected_output = 900;
 
-        let output = solve_part2(&input).unwrap();
+        let output = solve_part2(&input);
 
         assert_eq!(output, expected_output);
     }

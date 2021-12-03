@@ -2,13 +2,13 @@
 pub fn input_generator(input: &str) -> Vec<String> {
     input
         .lines()
-        .filter(|s| *s != "")
+        .filter(|s| !(*s).is_empty())
         .map(|s| s.to_owned())
         .collect::<Vec<String>>()
 }
 
 #[aoc(day3, part1)]
-pub fn solve_part1(input: &Vec<String>) -> usize {
+pub fn solve_part1(input: &[String]) -> usize {
     let most_common = get_value_balance_per_bit(input);
 
     let mut gamma_rate: usize = 0;
@@ -24,7 +24,7 @@ pub fn solve_part1(input: &Vec<String>) -> usize {
 }
 
 #[aoc(day3, part2)]
-pub fn solve_part2(input: &Vec<String>) -> usize {
+pub fn solve_part2(input: &[String]) -> usize {
     get_oxygen_generator_rating(input) * get_co2_scrubber_rating(input)
 
 }
@@ -50,17 +50,17 @@ pub fn filter_by_bit_value(input: &[String], bit_pos: usize, bit_value: usize) -
     let mut result = Vec::new();
     for value in input {
         if value.as_bytes()[bit_pos] as char == char::from_digit(bit_value as u32, 10).unwrap() {
-            result.push(value.clone());
+            result.push(value.to_owned());
         }
     }
 
     result
 }
 
-pub fn get_oxygen_generator_rating(input: &Vec<String>) -> usize {
+pub fn get_oxygen_generator_rating(input: &[String]) -> usize {
     let bitcount = input.iter().map(|x| x.len()).max().unwrap();
 
-    let mut remaining = input.clone();
+    let mut remaining = input.to_owned();
     for bit_pos in 0..bitcount {
         let balance_per_bit = get_value_balance_per_bit(&remaining);
         let most_common = if balance_per_bit[bit_pos] >= 0 { 1 } else { 0 };

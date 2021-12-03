@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 #[derive(Debug)]
 enum Direction {
-    UP, DOWN, FORWARD
+    Up, Down, Forward
 }
 
 #[derive(Debug)]
@@ -16,17 +16,17 @@ pub struct Command {
 impl FromStr for Command {
     type Err = ParseIntError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let v = s.split(" ").collect::<Vec<&str>>();
+        let v = s.split(' ').collect::<Vec<&str>>();
         let direction = match v[0] {
-            "forward" => Direction::FORWARD,
-            "up" => Direction::UP,
-            "down" => Direction::DOWN,
+            "forward" => Direction::Forward,
+            "up" => Direction::Up,
+            "down" => Direction::Down,
             _ => panic!("Cannot parse '{}' as direction", v[0])
         };
 
         let amount = v[1].parse::<usize>();
 
-        Ok(Command { direction: direction, amount: amount? })
+        Ok(Command { direction, amount: amount? })
     }
 }
 
@@ -34,25 +34,25 @@ impl FromStr for Command {
 pub fn input_generator(input: &str) -> Result<Vec<Command>, ParseIntError> {
     input
         .lines()
-        .filter(|s| *s != "")
+        .filter(|s| !(*s).is_empty())
         .map(|s| Command::from_str(s))
         .collect::<Result<Vec<Command>, ParseIntError>>()
 }
 
 #[aoc(day2, part1)]
-pub fn solve_part1(input: &Vec<Command>) -> usize {
+pub fn solve_part1(input: &[Command]) -> usize {
     let mut depth = 0;
     let mut distance = 0;
 
     for command in input {
         match command.direction {
-            Direction::FORWARD => {
+            Direction::Forward => {
                 distance += command.amount;
             },
-            Direction::DOWN => {
+            Direction::Down => {
                 depth += command.amount;
             },
-            Direction::UP => {
+            Direction::Up => {
                 depth -= command.amount;
             }
         }
@@ -62,21 +62,21 @@ pub fn solve_part1(input: &Vec<Command>) -> usize {
 }
 
 #[aoc(day2, part2)]
-pub fn solve_part2(input: &Vec<Command>) -> usize {
+pub fn solve_part2(input: &[Command]) -> usize {
     let mut depth = 0;
     let mut distance = 0;
     let mut aim = 0;
 
     for command in input {
         match command.direction {
-            Direction::FORWARD => {
+            Direction::Forward => {
                 distance += command.amount;
                 depth += command.amount * aim;
             },
-            Direction::DOWN => {
+            Direction::Down => {
                 aim += command.amount;
             },
-            Direction::UP => {
+            Direction::Up => {
                 aim -= command.amount;
             }
         }

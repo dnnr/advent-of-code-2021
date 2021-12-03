@@ -9,28 +9,88 @@ pub fn input_generator(input: &str) -> Vec<String> {
 
 #[aoc(day3, part1)]
 pub fn solve_part1(input: &Vec<String>) -> usize {
+    let most_common = get_value_balance_per_bit(input);
+
+    let mut gamma_rate: usize = 0;
+    for value in most_common {
+        gamma_rate <<= 1;
+        gamma_rate += if value > 0 { 1 } else { 0 };
+    }
+
     let bitcount = input.iter().map(|x| x.len()).max().unwrap();
-    let mut ones_per_pos = vec![0; bitcount];
+    let epsilon_rate = usize::pow(2, bitcount as u32) - gamma_rate - 1;
+
+    gamma_rate * epsilon_rate
+}
+
+#[aoc(day3, part2)]
+pub fn solve_part2(input: &Vec<String>) -> usize {
+    get_oxygen_generator_rating(input) * get_co2_scrubber_rating(input)
+
+}
+
+pub fn get_value_balance_per_bit(input: &Vec<String>) -> Vec<i32> {
+    let bitcount = input.iter().map(|x| x.len()).max().unwrap();
+    let mut balance_per_bit = vec![0; bitcount];
 
     for value in input {
         for (bit_pos, bit_value) in value.chars().enumerate() {
             if bit_value == '1' {
-                ones_per_pos[bit_pos] += 1;
+                balance_per_bit[bit_pos] += 1;
+            } else {
+                balance_per_bit[bit_pos] -= 1;
             }
         }
     }
 
-    let mut gamma_rate: usize = 0;
-    for ones in ones_per_pos {
-        gamma_rate <<= 1;
-        if (ones * 2) >= input.len() {
-            gamma_rate += 1;
+    balance_per_bit
+}
+
+pub fn filter_by_bit_value(input: &Vec<String>, bit_pos: usize, bit_value: usize) -> Vec<String> {
+    let mut result = Vec::new();
+    for value in input {
+        if value.as_bytes()[bit_pos] as char == char::from_digit(bit_value as u32, 10).unwrap() {
+            result.push(value.clone());
         }
     }
 
-    let epsilon_rate = usize::pow(2, bitcount as u32) - gamma_rate - 1;
+    result
+}
 
-    gamma_rate * epsilon_rate
+pub fn get_oxygen_generator_rating(input: &Vec<String>) -> usize {
+    let bitcount = input.iter().map(|x| x.len()).max().unwrap();
+
+    let mut remaining = input.clone();
+    for bit_pos in 0..bitcount {
+        let balance_per_bit = get_value_balance_per_bit(&remaining);
+        let most_common = if balance_per_bit[bit_pos] >= 0 { 1 } else { 0 };
+
+        remaining = filter_by_bit_value(&remaining, bit_pos, most_common);
+
+        if remaining.len() == 1 {
+            return usize::from_str_radix(&remaining[0], 2).unwrap();
+        }
+    }
+
+    panic!("No oxygen generator rating found (remaining input: {:?})", remaining);
+}
+
+pub fn get_co2_scrubber_rating(input: &Vec<String>) -> usize {
+    let bitcount = input.iter().map(|x| x.len()).max().unwrap();
+
+    let mut remaining = input.clone();
+    for bit_pos in 0..bitcount {
+        let balance_per_bit = get_value_balance_per_bit(&remaining);
+        let least_common = if balance_per_bit[bit_pos] < 0 { 1 } else { 0 };
+
+        remaining = filter_by_bit_value(&remaining, bit_pos, least_common);
+
+        if remaining.len() == 1 {
+            return usize::from_str_radix(&remaining[0], 2).unwrap();
+        }
+    }
+
+    panic!("No oxygen generator rating found (remaining input: {:?})", remaining);
 }
 
 #[cfg(test)]
@@ -59,6 +119,36 @@ mod test {
         let expected_output = 198;
 
         let output = solve_part1(&input);
+
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    pub fn test_get_oxygen_generator_rating() {
+        let input = input_generator(sample_str().as_str());
+        let expected_output = 23;
+
+        let output = get_oxygen_generator_rating(&input);
+
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    pub fn test_get_co2_scrubber_rating() {
+        let input = input_generator(sample_str().as_str());
+        let expected_output = 10;
+
+        let output = get_co2_scrubber_rating(&input);
+
+        assert_eq!(output, expected_output);
+    }
+
+    #[test]
+    pub fn test_solve_part2() {
+        let input = input_generator(sample_str().as_str());
+        let expected_output = 230;
+
+        let output = solve_part2(&input);
 
         assert_eq!(output, expected_output);
     }

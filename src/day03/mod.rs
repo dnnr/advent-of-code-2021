@@ -29,7 +29,7 @@ pub fn solve_part2(input: &Vec<String>) -> usize {
 
 }
 
-pub fn get_value_balance_per_bit(input: &Vec<String>) -> Vec<i32> {
+pub fn get_value_balance_per_bit(input: &[String]) -> Vec<i32> {
     let bitcount = input.iter().map(|x| x.len()).max().unwrap();
     let mut balance_per_bit = vec![0; bitcount];
 
@@ -46,7 +46,7 @@ pub fn get_value_balance_per_bit(input: &Vec<String>) -> Vec<i32> {
     balance_per_bit
 }
 
-pub fn filter_by_bit_value(input: &Vec<String>, bit_pos: usize, bit_value: usize) -> Vec<String> {
+pub fn filter_by_bit_value(input: &[String], bit_pos: usize, bit_value: usize) -> Vec<String> {
     let mut result = Vec::new();
     for value in input {
         if value.as_bytes()[bit_pos] as char == char::from_digit(bit_value as u32, 10).unwrap() {
@@ -75,10 +75,10 @@ pub fn get_oxygen_generator_rating(input: &Vec<String>) -> usize {
     panic!("No oxygen generator rating found (remaining input: {:?})", remaining);
 }
 
-pub fn get_co2_scrubber_rating(input: &Vec<String>) -> usize {
+pub fn get_co2_scrubber_rating(input: &[String]) -> usize {
     let bitcount = input.iter().map(|x| x.len()).max().unwrap();
 
-    let mut remaining = input.clone();
+    let mut remaining = input.to_owned();
     for bit_pos in 0..bitcount {
         let balance_per_bit = get_value_balance_per_bit(&remaining);
         let least_common = if balance_per_bit[bit_pos] < 0 { 1 } else { 0 };

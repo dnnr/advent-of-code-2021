@@ -71,6 +71,19 @@ pub struct Game {
     boards: Vec<Board>,
 }
 
+impl Game {
+    fn play_boards(&self) -> Vec<Outcome> {
+        let mut outcomes = self.boards.iter()
+            .map(|board| board.play(&self.draw))
+            .flatten()
+            .collect::<Vec<Outcome>>();
+
+            outcomes.sort_by(|a, b| a.winning_round.partial_cmp(&b.winning_round).unwrap());
+
+            outcomes
+    }
+}
+
 #[aoc_generator(day4)]
 pub fn input_generator(input: &str) -> Game {
     let groups = input.split("\n\n").collect::<Vec<&str>>();
@@ -90,15 +103,16 @@ pub fn input_generator(input: &str) -> Game {
 
 #[aoc(day4, part1)]
 pub fn solve_part1(game: &Game) -> u32 {
-    let mut outcomes = game.boards.iter()
-        .map(|board| board.play(&game.draw))
-        .flatten()
-        .collect::<Vec<Outcome>>();
-
-    outcomes.sort_by(|a, b| a.winning_round.partial_cmp(&b.winning_round).unwrap());
-
+    let outcomes = game.play_boards();
     let winner = &outcomes[0];
     winner.score
+}
+
+#[aoc(day4, part2)]
+pub fn solve_part2(game: &Game) -> u32 {
+    let outcomes = game.play_boards();
+    let loser = &outcomes.last().unwrap();
+    loser.score
 }
 
 #[cfg(test)]
@@ -142,6 +156,16 @@ mod test {
         let expected_score = 4512;
 
         let score = solve_part1(&game);
+
+        assert_eq!(score, expected_score);
+    }
+
+    #[test]
+    pub fn test_solve_part2() {
+        let game = input_generator(sample_str().as_str());
+        let expected_score = 1924;
+
+        let score = solve_part2(&game);
 
         assert_eq!(score, expected_score);
     }

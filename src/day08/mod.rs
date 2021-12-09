@@ -3,40 +3,10 @@ use std::string::ParseError;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
-pub struct Digit {
-    seg_chars: BTreeSet<char>,
-    seg_bools: Vec<bool>,
-    a: bool,
-    b: bool,
-    c: bool,
-    d: bool,
-    e: bool,
-    f: bool,
-    g: bool,
-}
-
-impl FromStr for Digit {
-    type Err = ParseError;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Digit {
-            seg_chars: s.chars().collect(),
-            seg_bools: (0..7).map(|d| s.contains((b'a' + d) as char)).collect::<Vec<bool>>(),
-            a: s.contains('a'),
-            b: s.contains('b'),
-            c: s.contains('c'),
-            d: s.contains('d'),
-            e: s.contains('e'),
-            f: s.contains('f'),
-            g: s.contains('g'),
-        })
-    }
-}
+type Digit = BTreeSet<char>;
 
 #[derive(Debug)]
 pub struct Entry {
-    // uniques: [Digit; 10],
-    // output: [Digit; 4],
     uniques: Vec<Digit>,
     output: Vec<Digit>,
 }
@@ -47,7 +17,7 @@ impl FromStr for Entry {
         let lr = s.split('|')
             .map(|lr| lr.split(' ')
                 .filter(|s| !(*s).is_empty())
-                .map(|d| Digit::from_str(d).unwrap())
+                .map(|d| Digit::from_iter(d.chars()))
                 .collect::<Vec<Digit>>()
             )
             .collect::<Vec<Vec<Digit>>>();
@@ -70,36 +40,13 @@ pub fn solve_part1(entries: &[Entry]) -> usize {
         .iter()
         .map(|e| e.output
             .iter()
-            .filter(|d| [2, 3, 4, 7].contains(&d.seg_chars.len()))
+            .filter(|d| [2, 3, 4, 7].contains(&d.len()))
             .count())
         .sum()
 }
 
-// fn check_if_valid_solution(entry: &Entry, mapping: &[u8; 7]) -> bool {
-    // let mut mapped_uniques: Vec<u8> = Vec::new();
-
-    // entry.uniques
-        // .iter()
-        // .map(|d| d.seg_chars
-            // .iter()
-            // .map(|c| mapping[*c as usize - 'a'as usize])
-            // );
-    // false
-// }
-
-// fn find_and_take<F: for<'r> std::ops::FnMut<(&'r &std::collections::BTreeSet<char>,)>>(set: BTreeSet<BTreeSet<char>>, condition: F) -> bool {
-fn find_and_take<F>(set: &mut BTreeSet<BTreeSet<char>>, condition: F) -> BTreeSet<char> where F: Fn(&&BTreeSet<char>) -> bool {
-    /*
-    let mut iter = set.iter().filter(condition);
-    let found = iter.next().unwrap();
-    assert!(iter.next().is_none());
-    let found2 = found.clone();
-    set.remove(found);
-    // found.clone()
-    found2
-    */
-
-    let mut found: Option<BTreeSet<char>> = None;
+fn find_and_take<F>(set: &mut BTreeSet<Digit>, condition: F) -> Digit where F: Fn(&&Digit) -> bool {
+    let mut found = None;
     set.retain(|k| {
         if condition(&k) {
             found = Some(k.clone());
@@ -112,79 +59,72 @@ fn find_and_take<F>(set: &mut BTreeSet<BTreeSet<char>>, condition: F) -> BTreeSe
     found.unwrap()
 }
 
-type Digit2 = BTreeSet<char>;
+fn determine_codebook(uniques: &[Digit]) -> HashMap<Digit, u8> {
+    // Organize uniques in a set
+    let mut uniques = BTreeSet::from_iter(uniques.iter().cloned());
 
-fn determine_codebook(uniques: &[Digit]) -> HashMap<Digit2, usize> {
-    let mut uniques_set = uniques.iter().map(|x| BTreeSet::from(x.seg_chars.clone())).collect::<BTreeSet<_>>();
-    let mut num_to_charset: HashMap<usize, BTreeSet<char>> = HashMap::new();
-
-    println!("uniques: {:?}", uniques_set);
+    // Build mapping from numbers to sets of characters
+    let mut num_to_charset: HashMap<u8, BTreeSet<char>> = HashMap::new();
 
     // 1, 4, 7, 8 are easy as per the number of segments
-    num_to_charset.insert(1, find_and_take(&mut uniques_set, |x| x.len() == 2));
-    num_to_charset.insert(4, find_and_take(&mut uniques_set, |x| x.len() == 4));
-    num_to_charset.insert(7, find_and_take(&mut uniques_set, |x| x.len() == 3));
-    num_to_charset.insert(8, find_and_take(&mut uniques_set, |x| x.len() == 7));
+    num_to_charset.insert(1, find_and_take(&mut uniques, |x| x.len() == 2));
+    num_to_charset.insert(4, find_and_take(&mut uniques, |x| x.len() == 4));
+    num_to_charset.insert(7, find_and_take(&mut uniques, |x| x.len() == 3));
+    num_to_charset.insert(8, find_and_take(&mut uniques, |x| x.len() == 7));
 
     // 9 is the only one with 6 segments that also contains 1 and 4
-    num_to_charset.insert(9, find_and_take(&mut uniques_set, |x|
+    num_to_charset.insert(9, find_and_take(&mut uniques, |x|
             x.len() == 6
-            && x.is_superset(&num_to_charset.get(&1).unwrap())
-            && x.is_superset(&num_to_charset.get(&4).unwrap())
+            && x.is_superset(num_to_charset.get(&1).unwrap())
+            && x.is_superset(num_to_charset.get(&4).unwrap())
             ));
 
     // Now 0 is the only one with 6 segments that contains 1
-    num_to_charset.insert(0, find_and_take(&mut uniques_set, |x|
+    num_to_charset.insert(0, find_and_take(&mut uniques, |x|
             x.len() == 6
-            && x.is_superset(&num_to_charset.get(&1).unwrap())
+            && x.is_superset(num_to_charset.get(&1).unwrap())
             ));
 
     // 3 is the only one with 5 segments that contains 1
-    num_to_charset.insert(3, find_and_take(&mut uniques_set, |x|
+    num_to_charset.insert(3, find_and_take(&mut uniques, |x|
             x.len() == 5
-            && x.is_superset(&num_to_charset.get(&1).unwrap())));
+            && x.is_superset(num_to_charset.get(&1).unwrap())));
 
     // 6 is the only remaining one with 6 segments
-    num_to_charset.insert(6, find_and_take(&mut uniques_set, |x| x.len() == 6));
+    num_to_charset.insert(6, find_and_take(&mut uniques, |x| x.len() == 6));
 
     // 5 and 2 both have 5 segments, but only 5 is a subset of 6
-    num_to_charset.insert(5, find_and_take(&mut uniques_set, |x|
+    num_to_charset.insert(5, find_and_take(&mut uniques, |x|
             x.len() == 5
-            && x.is_subset(&num_to_charset.get(&6).unwrap())));
+            && x.is_subset(num_to_charset.get(&6).unwrap())));
 
     // 2 is the only one remaining
-    num_to_charset.insert(2, find_and_take(&mut uniques_set, |x| x.len() == 5));
+    num_to_charset.insert(2, find_and_take(&mut uniques, |x| x.len() == 5));
 
     // Sanity checks
     assert_eq!(num_to_charset.len(), 10);
-    assert!(uniques_set.is_empty());
+    assert!(uniques.is_empty());
 
     // Reverse the map map to get the desired codebook
     num_to_charset
         .iter()
-        .map(|(num, charset)| (charset.clone(), num.clone()))
-        .collect::<HashMap<Digit2, usize>>()
+        .map(|(num, charset)| (charset.clone(), *num))
+        .collect::<HashMap<Digit, u8>>()
 }
 
-fn solve_entry(entry: &Entry) -> Vec<usize> {
-    let reverse_codebook = determine_codebook(&entry.uniques);
+fn solve_entry(entry: &Entry) -> Vec<u8> {
+    let codebook = determine_codebook(&entry.uniques);
 
-    // println!("codebook: {:?}", codebook);
-    // println!("reverse codebook: {:?}", reverse_codebook);
-
-    let output_sets = entry.output.iter().map(|x| BTreeSet::from(x.seg_chars.clone())).collect::<Vec<_>>();
-    // println!("output_sets: {:?}", output_sets);
-
-    let output_decoded =output_sets.iter().map(|x| *reverse_codebook.get(&x).expect(&format!("No reverse codebook entry for {:?}", x))).collect::<Vec<usize>>();
-
-    println!("output: {:?}, sum: {}", entry.output, output_decoded.iter().sum::<usize>());
-    println!(" ");
-
-    output_decoded
+    // Apply codebook to output digits
+    entry.output
+        .iter()
+        .map(|x| *codebook.get(x).unwrap_or_else(|| panic!("No reverse codebook entry for {:?}", x)))
+        .collect::<Vec<u8>>()
 }
 
-fn output_vec_to_number(digits: Vec<usize>) -> usize {
-    digits.iter().fold(0, |acc, x| acc * 10 + x)
+fn output_vec_to_number(digits: Vec<u8>) -> usize {
+    // Interpret given digits as base 10 number
+    digits.iter().fold(0, |acc, x| acc * 10 + *x as usize)
 }
 
 #[aoc(day8, part2)]
@@ -195,7 +135,6 @@ pub fn solve_part2(entries: &[Entry]) -> usize {
         .map(output_vec_to_number)
         .sum::<usize>()
 }
-
 
 #[cfg(test)]
 mod test {
@@ -218,15 +157,8 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
     pub fn test_input_generator() {
         let entries = input_generator(&sample_str().as_str());
 
-        println!("{:?}", entries[0].output);
-
-        assert_eq!(entries[0].uniques[0].seg_chars, BTreeSet::from_iter(['b', 'e']));
-        assert_eq!(entries[0].uniques[0].seg_bools, vec![false, true, false, false, true, false, false]);
-        assert!(entries[0].uniques[0].b);
-        assert!(entries[0].uniques[0].e);
-        assert_eq!(entries[1].output[3].seg_chars, BTreeSet::from_iter(['g', 'c']));
-        assert!(entries[1].output[3].g);
-        assert!(entries[1].output[3].c);
+        assert_eq!(entries[0].uniques[0], BTreeSet::from_iter(['b', 'e']));
+        assert_eq!(entries[1].output[3], BTreeSet::from_iter(['g', 'c']));
     }
 
     #[test]
@@ -247,7 +179,6 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
 
         assert_eq!(entry_solution, vec![5, 3, 5, 3]);
     }
-
 
     #[test]
     pub fn test_solve_part2() {

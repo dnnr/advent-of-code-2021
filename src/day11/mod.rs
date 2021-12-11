@@ -20,18 +20,13 @@ fn increment(matrix: &mut Vec<Vec<u8>>) {
 
 fn increment_neighbors(matrix: &mut Vec<Vec<u8>>, row_idx: &usize, col_idx: &usize) {
     let neighbors = vec![
-        (*row_idx as i32 - 1, *col_idx as i32 - 1),
-        (*row_idx as i32 - 1, *col_idx as i32),
-        (*row_idx as i32 - 1, *col_idx as i32 + 1),
-
-        (*row_idx as i32    , *col_idx as i32 - 1),
-        // (self)
-        (*row_idx as i32    , *col_idx as i32 + 1),
-
-        (*row_idx as i32 + 1, *col_idx as i32 - 1),
-        (*row_idx as i32 + 1, *col_idx as i32),
-        (*row_idx as i32 + 1, *col_idx as i32 + 1),
-    ];
+        ( 0,  1),  (1, 1),  (1,  0),
+        ( 1, -1),           (0, -1),
+        (-1, -1), (-1, 0), (-1,  1)
+    ].iter()
+        .map(|(r, c)|
+            (*row_idx as i32 + r, *col_idx as i32 + c))
+        .collect::<Vec<(i32, i32)>>();
 
     let rows_count = matrix.len();
     let cols_count = matrix[0].len();

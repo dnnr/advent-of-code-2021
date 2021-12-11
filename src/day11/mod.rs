@@ -102,6 +102,20 @@ pub fn solve_part1(matrix_ro: &[Vec<u8>]) -> usize {
         .sum()
 }
 
+#[aoc(day11, part2)]
+pub fn solve_part2(matrix_ro: &[Vec<u8>]) -> usize {
+    let mut matrix = matrix_ro.to_owned();
+
+    for n in 1.. {
+        if step(&mut matrix) == 100 {
+            return n;
+        }
+    }
+
+    // fail
+    0
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -172,5 +186,14 @@ mod test {
         let flashcount = solve_part1(&matrix);
 
         assert_eq!(flashcount, 1656);
+    }
+
+    #[test]
+    pub fn test_solve_part2() {
+        let matrix = input_generator(&sample_str().as_str());
+
+        let flashcount = solve_part2(&matrix);
+
+        assert_eq!(flashcount, 195);
     }
 }

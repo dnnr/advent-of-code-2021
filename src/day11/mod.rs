@@ -3,7 +3,6 @@ pub fn input_generator(input: &str) -> Vec<Vec<u8>> {
     input
         .lines()
         .map(|l| l.chars()
-            // .map(|c| c.parse::<u8>().unwrap())
             .map(|c| c.to_digit(10).unwrap() as u8)
             .collect::<Vec<u8>>()
         )

@@ -13,5 +13,6 @@ pub mod day08;
 // day09: skipped in favor of completing day08
 // day10: Python with yogan
 pub mod day11;
+pub mod day12;
 
 aoc_lib!{ year = 2021 }

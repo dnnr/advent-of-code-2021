@@ -12,7 +12,7 @@ type Map = HashMap<String, Cave>;
 
 fn insert_or_get(map: &mut Map, id: &str) {
     if !map.contains_key(id) {
-        let is_large = id.chars().nth(0).unwrap().is_uppercase();
+        let is_large = id.chars().next().unwrap().is_uppercase();
         map.insert(id.to_owned(), Cave { is_large, adjacents: HashSet::new() });
     }
 }
@@ -32,38 +32,61 @@ pub fn input_generator(input: &str) -> HashMap<String, Cave> {
     map
 }
 
-#[aoc(day12, part1)]
-pub fn solve_part1(map: &Map) -> usize {
-    // Work queues do not really need to be sets, but they are...
-    let mut known_paths: BTreeSet<Vec::<String>> = BTreeSet::new();
-    let mut paths_to_continue: BTreeSet<Vec::<String>> = BTreeSet::new();
+fn find_paths(map: &Map, cave_allowed_twice: Option<&str>) -> Vec::<Vec::<String>> {
+    let mut known_paths: Vec::<Vec::<String>> = Vec::new();
+    let mut paths_to_continue = vec![vec!["start".to_owned()]];
 
-    paths_to_continue.insert(vec!["start".to_owned()]);
-
-    while paths_to_continue.len() > 0 {
+    while !paths_to_continue.is_empty() {
         // Take next path
-        let path = paths_to_continue.iter().nth(0).unwrap().clone();
-        paths_to_continue.take(&path);
+        let path =paths_to_continue.pop().unwrap();
 
         let current_cave_id = path.last().unwrap();
         if current_cave_id == "end" {
-            let is_really_new = known_paths.insert(path);
-            assert!(is_really_new);
+            known_paths.push(path);
         } else {
             // Extend path to all adjacent caves
             for next_cave_id in &map.get(current_cave_id).unwrap().adjacents {
                 let next_cave = &map.get(next_cave_id).unwrap();
 
-                // Make sure not to visit a small cave twice
-                if next_cave.is_large || !path.contains(next_cave_id) {
+                let max_previous_appearances =
+                    if matches!(&cave_allowed_twice, Some(x) if next_cave_id == x)
+                        && next_cave_id != "start" {
+                        1
+                    } else {
+                        0
+                    };
+
+                if next_cave.is_large
+                   || path.iter().filter(|x| *x == next_cave_id).count() <= max_previous_appearances {
                     let mut new_path = path.clone();
                     new_path.push(next_cave_id.clone());
-                    let is_really_new = paths_to_continue.insert(new_path);
-                    assert!(is_really_new);
+                    paths_to_continue.push(new_path);
                 }
             }
         }
 
+    }
+
+    known_paths
+}
+
+#[aoc(day12, part1)]
+pub fn solve_part1(map: &Map) -> usize {
+    let known_paths = find_paths(map, None);
+    known_paths.len()
+}
+
+
+#[aoc(day12, part2)]
+pub fn solve_part2(map: &Map) -> usize {
+    let mut known_paths = BTreeSet::from_iter(find_paths(map, None));
+
+    // Collect more paths with one of each small cave allowed twice:
+    for (id, cave) in map {
+        if !cave.is_large {
+            let more_paths = find_paths(map, Some(id));
+            known_paths.append(&mut BTreeSet::from_iter(more_paths));
+        }
     }
 
     known_paths.len()
@@ -167,5 +190,32 @@ start-RW")
         let paths = solve_part1(&map);
 
         assert_eq!(paths, 226);
+    }
+
+    #[test]
+    pub fn test_solve_part2_sample1() {
+        let map = input_generator(&sample1().as_str());
+
+        let paths = solve_part2(&map);
+
+        assert_eq!(paths, 36);
+    }
+
+    #[test]
+    pub fn test_solve_part2_sample2() {
+        let map = input_generator(&sample2().as_str());
+
+        let paths = solve_part2(&map);
+
+        assert_eq!(paths, 103);
+    }
+
+    #[test]
+    pub fn test_solve_part2_sample3() {
+        let map = input_generator(&sample3().as_str());
+
+        let paths = solve_part2(&map);
+
+        assert_eq!(paths, 3509);
     }
 }

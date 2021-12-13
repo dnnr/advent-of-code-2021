@@ -1,7 +1,5 @@
 use std::str::FromStr;
 use std::collections::HashSet;
-// use std::fmt::Write as FmtWrite;
-// use std::io::Write as IoWrite;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Fold {
